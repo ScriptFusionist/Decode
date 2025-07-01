@@ -27,7 +27,7 @@
       "name": "Mulai Decode",
       "short_name": "Decode",
       "description": "Buka halaman untuk mulai decoding",
-      "url": "/",
+      "url": "/decode/",
       "icons": [
         {
           "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
