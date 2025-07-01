@@ -1,0 +1,42 @@
+{
+  "name": "SmartDecode - Link Decoder",
+  "short_name": "SmartDecode",
+  "description": "SmartDecode mempermudah decoding link base64 dan shortlink secara otomatis.",
+  "lang": "id,en",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Mulai Decode",
+      "short_name": "Decode",
+      "description": "Buka halaman untuk mulai decoding",
+      "url": "/",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/565/565547.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "categories": ["tools", "utilities", "productivity"],
+  "prefer_related_applications": false
+}

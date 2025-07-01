@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartDecode Web</title>
+  <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/565/565547.png" />
+  <meta name="theme-color" content="#1f2937" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      padding: 0.75rem 1.25rem; border-radius: 0.5rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3); color: white;
+      display: none; z-index: 999;
+      animation: fadeInOut 3s ease-in-out;
+    }
+    .toast-success { background-color: #16a34a; }
+    .toast-error { background-color: #dc2626; }
+    @keyframes fadeInOut {
+      0% { opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { opacity: 0; }
+    }
+    #clear-button {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: none;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      color: #9CA3AF;
+    }
+    /* Dropdown animation */
+    #lang-menu {
+      transition: all 0.2s ease-in-out;
+      transform-origin: top;
+      transform: scaleY(0);
+      opacity: 0;
+      pointer-events: none;
+    }
+    #lang-menu.open {
+      transform: scaleY(1);
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-tr from-gray-900 via-gray-800 to-gray-900 text-white min-h-screen flex flex-col justify-center items-center px-4 py-10">
+
+  <div class="w-full max-w-xl bg-gray-800 rounded-xl shadow-lg p-6 space-y-6">
+    <div class="flex justify-between items-center">
+      <h1 class="text-3xl font-semibold text-blue-400">SmartDecode</h1>
+
+      <!-- 🌐 Dropdown Bahasa -->
+      <div class="relative inline-block text-left" id="lang-dropdown">
+        <button id="lang-toggle" class="inline-flex justify-center w-full rounded-md bg-gray-700 px-3 py-2 text-sm font-medium text-white hover:bg-gray-600 focus:outline-none">
+          <span id="lang-label">🇮🇩 ID</span>
+          <svg class="-mr-1 ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7l3-3 3 3m0 6l-3 3-3-3" />
+          </svg>
+        </button>
+
+        <div id="lang-menu" class="absolute right-0 mt-2 w-28 rounded-md shadow-lg bg-gray-800 ring-1 ring-black ring-opacity-5 z-50 hidden">
+          <div class="py-1 text-sm">
+            <button class="block w-full px-4 py-2 text-left text-white hover:bg-gray-700" data-lang="id">🇮🇩 ID</button>
+            <button class="block w-full px-4 py-2 text-left text-white hover:bg-gray-700" data-lang="en">🇬🇧 EN</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p id="desc-text" class="text-gray-300 text-center text-sm">Decode otomatis link base64, deteksi sumber</p>
+
+    <div class="relative">
+      <input type="text" id="input-link" placeholder="Tempelkan link shortlink atau encoded..." class="w-full px-4 py-3 pr-10 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button id="clear-button" title="Clear input" aria-label="Clear input">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <button id="decode-button" class="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-lg transition duration-200">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+      </svg>
+      <span id="decode-btn-text">Decode Sekarang</span>
+    </button>
+
+    <div id="output" class="space-y-4"></div>
+    <button id="install-btn" class="hidden w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded transition">⬇️ Pasang Aplikasi Ini</button>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    const toast = document.getElementById('toast');
+    const output = document.getElementById('output');
+    const decodeBtn = document.getElementById('decode-button');
+    const decodeBtnText = document.getElementById('decode-btn-text');
+    const inputLink = document.getElementById('input-link');
+    const clearBtn = document.getElementById('clear-button');
+    const langToggle = document.getElementById('lang-toggle');
+    const langMenu = document.getElementById('lang-menu');
+    const langLabel = document.getElementById('lang-label');
+
+    let langNow = 'id';
+
+    const LANG = {
+      id: {
+        desc: 'Decode otomatis link base64, deteksi sumber',
+        placeholder: 'Tempelkan link shortlink atau encoded...',
+        decodeNow: 'Decode Sekarang',
+        success: 'Link berhasil didecode.',
+        error: 'Gagal mendecode link.',
+        copied: 'Link disalin ke clipboard',
+        copyFail: 'Gagal menyalin ke clipboard.',
+        empty: 'Masukkan link terlebih dahulu.',
+        source: 'Sumber',
+        result: 'Hasil Decode:',
+        open: 'Buka',
+        copy: 'Salin'
+      },
+      en: {
+        desc: 'Automatically decode base64 links, detect source',
+        placeholder: 'Paste shortlink or encoded link...',
+        decodeNow: 'Decode Now',
+        success: 'Link decoded successfully.',
+        error: 'Failed to decode link.',
+        copied: 'Link copied to clipboard',
+        copyFail: 'Failed to copy to clipboard.',
+        empty: 'Please enter a link.',
+        source: 'Source',
+        result: 'Decoded Result:',
+        open: 'Open',
+        copy: 'Copy'
+      }
+    };
+
+    function updateLangUI() {
+      const t = LANG[langNow];
+      decodeBtnText.textContent = t.decodeNow;
+      document.getElementById('desc-text').textContent = t.desc;
+      inputLink.placeholder = t.placeholder;
+    }
+
+    function showToast(msg, type = 'success') {
+      toast.className = `toast toast-${type}`;
+      toast.textContent = msg;
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    function autoDetectAndDecode(str) {
+      try {
+        if (/^[A-Za-z0-9+/=]+$/.test(str) && str.length % 4 === 0) return atob(str);
+        if (str.includes('%')) return decodeURIComponent(str);
+        if (/^(0x)?[0-9a-f]+$/i.test(str)) return str.match(/.{1,2}/g).map(b => String.fromCharCode(parseInt(b, 16))).join('');
+        return str;
+      } catch { return str; }
+    }
+
+    function extractParameter(url) {
+      try {
+        const parsed = new URL(url);
+        const possible = parsed.pathname.split('/').filter(Boolean).pop();
+        if (possible && possible.length > 10) return possible;
+        const params = new URLSearchParams(parsed.search);
+        const keys = ['s','url','go','link','target','redirect','r','u','dest','to','page','id','site','jump','out','v','ref','q'];
+        for (const key of keys) if (params.has(key)) return params.get(key);
+      } catch {
+        return url;
+      }
+      return url;
+    }
+
+    function detectSource(url) {
+      const sources = [
+        { name: 'Google Drive', keyword: 'drive.google.com' },
+        { name: 'Mediafire', keyword: 'mediafire.com' },
+        { name: 'Mega.nz', keyword: 'mega.nz' },
+        { name: 'Zippyshare', keyword: 'zippyshare.com' },
+        { name: 'Pixeldrain', keyword: 'pixeldrain.com' },
+        { name: 'Mixdrop', keyword: 'mixdrop.co' },
+        { name: 'GitHub', keyword: 'github.com' },
+        { name: 'Anonfiles', keyword: 'anonfiles.com' },
+        { name: 'Gofile', keyword: 'gofile.io' },
+        { name: 'Bayfiles', keyword: 'bayfiles.com' },
+        { name: 'Terabox', keyword: 'terabox.com' },
+        { name: '1fichier', keyword: '1fichier.com' }
+      ];
+      const found = sources.find(source => url.includes(source.keyword));
+      return found ? found.name : (langNow === 'id' ? 'Tidak diketahui' : 'Unknown');
+    }
+
+    function decodeLink() {
+      const t = LANG[langNow];
+      const input = inputLink.value.trim();
+      output.innerHTML = '';
+      if (!input) return showToast(t.empty, 'error');
+
+      try {
+        const encoded = extractParameter(input);
+        const decoded = autoDetectAndDecode(encoded);
+        const isValid = decoded.startsWith('http://') || decoded.startsWith('https://');
+        if (!isValid) throw new Error('Invalid URL');
+
+        const source = detectSource(decoded);
+
+        const result = document.createElement('div');
+        result.className = 'p-4 bg-gray-700 rounded-lg shadow space-y-3';
+        result.innerHTML = `
+          <div class="flex items-center gap-2 text-green-300 font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            ${t.result}
+          </div>
+          <div class="break-words text-blue-400"><a href="${decoded}" target="_blank" class="underline">${decoded}</a></div>
+          <p class="text-sm text-gray-400">${t.source}: ${source}</p>
+          <div class="flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0 pt-2">
+            <button onclick="copyToClipboard('${decoded.replace(/'/g, "\\'")}')" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition">${t.copy}</button>
+            <a href="${decoded}" target="_blank" class="w-full sm:w-auto text-center px-4 py-2 bg-indigo-500 text-white rounded hover:bg-indigo-600 transition">${t.open}</a>
+          </div>`;
+        output.appendChild(result);
+        showToast(t.success);
+      } catch (err) {
+        console.error('[Decode Error]', err);
+        showToast(t.error, 'error');
+      }
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => showToast(LANG[langNow].copied), () => showToast(LANG[langNow].copyFail, 'error'));
+    }
+
+    decodeBtn.addEventListener('click', decodeLink);
+    inputLink.addEventListener('keydown', e => { if (e.key === 'Enter') decodeLink(); });
+    inputLink.addEventListener('input', () => {
+      clearBtn.style.display = inputLink.value ? 'block' : 'none';
+    });
+    clearBtn.addEventListener('click', () => {
+      inputLink.value = '';
+      clearBtn.style.display = 'none';
+      output.innerHTML = '';
+    });
+
+    langToggle.addEventListener('click', () => {
+      langMenu.classList.toggle('hidden');
+      langMenu.classList.toggle('open');
+    });
+
+    langMenu.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        langNow = btn.dataset.lang;
+        langLabel.textContent = btn.textContent;
+        updateLangUI();
+        langMenu.classList.remove('open');
+        langMenu.classList.add('hidden');
+      });
+    });
+
+    document.addEventListener('click', e => {
+      if (!document.getElementById('lang-dropdown').contains(e.target)) {
+        langMenu.classList.remove('open');
+        langMenu.classList.add('hidden');
+      }
+    });
+
+    // PWA install button
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove('hidden');
+    });
+    installBtn.addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const result = await deferredPrompt.userChoice;
+        if (result.outcome === 'accepted') installBtn.classList.add('hidden');
+      }
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('✅ Service Worker registered'))
+        .catch(err => console.warn('❌ Service Worker error', err));
+    }
+
+    updateLangUI();
+  </script>
+
+</body>
+</html>
