@@ -1,8 +1,13 @@
 const CACHE_NAME = 'smartdecode-v1';
+
+// Auto-detect base path (e.g. /decode/)
+const BASE_PATH = self.location.pathname.replace(/sw\.js$/, '');
+
+// Daftar file untuk dicache
 const urlsToCache = [
-  '/', // root
-  '/index.html',
-  '/manifest.json',
+  BASE_PATH,
+  BASE_PATH + 'index.html',
+  BASE_PATH + 'manifest.json',
   'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
   'https://cdn-icons-png.flaticon.com/512/565/565547.png'
 ];
@@ -12,14 +17,14 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return Promise.allSettled(
-        urlsToCache.map(url => cache.add(url))
+        urlsToCache.map(url => cache.add(url).catch(err => console.warn('⚠️ Gagal cache:', url)))
       );
     })
   );
-  self.skipWaiting(); // langsung aktif
+  self.skipWaiting(); // Langsung aktif tanpa tunggu close tab
 });
 
-// Hapus cache lama saat activate
+// Saat aktif: hapus cache lama
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -28,41 +33,39 @@ self.addEventListener('activate', event => {
       )
     )
   );
-  self.clients.claim();
+  self.clients.claim(); // Ambil kendali langsung
 });
 
-// Intercept semua request
+// Intercept semua request GET
 self.addEventListener('fetch', event => {
-  // Hanya tangani GET saja
   if (event.request.method !== 'GET') return;
 
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Jika ditemukan di cache, pakai cache
         if (response) return response;
 
-        // Jika tidak, ambil dari internet
-        return fetch(event.request)
-          .then(fetchRes => {
-            // Simpan salinan ke cache jika dari origin yang valid
-            const clone = fetchRes.clone();
-            if (
-              event.request.url.startsWith(self.location.origin) ||
-              event.request.url.includes('cdn.jsdelivr.net') ||
-              event.request.url.includes('flaticon.com')
-            ) {
-              caches.open(CACHE_NAME).then(cache => {
-                cache.put(event.request, clone);
-              });
-            }
-            return fetchRes;
-          });
+        return fetch(event.request).then(fetchRes => {
+          const clone = fetchRes.clone();
+
+          // Cache hanya file dari origin sendiri atau CDN
+          if (
+            event.request.url.startsWith(self.location.origin) ||
+            event.request.url.includes('cdn.jsdelivr.net') ||
+            event.request.url.includes('flaticon.com')
+          ) {
+            caches.open(CACHE_NAME).then(cache => {
+              cache.put(event.request, clone);
+            });
+          }
+
+          return fetchRes;
+        });
       })
       .catch(() => {
-        // Fallback jika total offline
+        // Fallback jika offline dan file HTML
         if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match(BASE_PATH + 'index.html');
         }
       })
   );
