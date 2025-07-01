@@ -292,6 +292,12 @@
         .catch(err => console.warn('❌ Service Worker error', err));
     }
 
+    if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js')
+    .then(() => console.log('✅ Service Worker registered'))
+    .catch(err => console.warn('❌ Service Worker error', err));
+    }
+
     updateLangUI();
   </script>
 
