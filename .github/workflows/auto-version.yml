@@ -15,7 +15,10 @@ jobs:
     - name: Set version based on datetime
       run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    - name: Resize icons (ImageMagick)
+    - name: Install ImageMagick
+      run: sudo apt-get update && sudo apt-get install -y imagemagick
+
+    - name: Resize icons using ImageMagick
       run: |
         mkdir -p icons
         convert icons/icon-original.png -resize 192x192 icons/icon-192.png
