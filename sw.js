@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smartdecode-v1';
+const CACHE_NAME = 'smartdecode-VERSION_PLACEHOLDER';
 const urlsToCache = [
   './', // index.html relatif ke folder /decode/
   './index.html',
