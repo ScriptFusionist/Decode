@@ -72,7 +72,7 @@
       </div>
     </div>
 
-    <p id="desc-text" class="text-gray-300 text-center text-sm">Decode otomatis link base64, deteksi sumber</p>
+    <p id="desc-text" class="text-gray-300 text-center text-sm">Decode otomatis link base64</p>
 
     <div class="relative">
       <input type="text" id="input-link" placeholder="Tempelkan link shortlink atau encoded..." class="w-full px-4 py-3 pr-10 rounded-lg bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -116,7 +116,7 @@
 
     const LANG = {
       id: {
-        desc: 'Decode otomatis link base64, deteksi sumber',
+        desc: 'Decode otomatis link base64',
         placeholder: 'Tempelkan link shortlink atau encoded...',
         decodeNow: 'Decode Sekarang',
         success: 'Link berhasil didecode.',
@@ -127,10 +127,14 @@
         source: 'Sumber',
         result: 'Hasil Decode:',
         open: 'Buka',
-        copy: 'Salin'
+        copy: 'Salin',
+        notUrl: 'Hasil decode bukan URL yang valid.',
+        noNeed: 'Link ini tidak perlu didecode.',
+        invalidInput: 'Input bukan link valid.',
+        failed: 'Gagal Decode'
       },
       en: {
-        desc: 'Automatically decode base64 links, detect source',
+        desc: 'Automatically decode base64 links',
         placeholder: 'Paste shortlink or encoded link...',
         decodeNow: 'Decode Now',
         success: 'Link decoded successfully.',
@@ -141,7 +145,11 @@
         source: 'Source',
         result: 'Decoded Result:',
         open: 'Open',
-        copy: 'Copy'
+        copy: 'Copy',
+        notUrl: 'Decoded result is not a valid URL.',
+        noNeed: 'This link does not need decoding.',
+        invalidInput: 'Input is not a valid link.',
+        failed: 'Decode Failed'
       }
     };
 
@@ -158,6 +166,15 @@
       toast.textContent = msg;
       toast.style.display = 'block';
       setTimeout(() => toast.style.display = 'none', 3000);
+    }
+
+    function showErrorDetail(reason) {
+      output.innerHTML = `
+        <div class="p-4 bg-red-700 text-white rounded-lg shadow space-y-2">
+          <div class="font-semibold">${LANG[langNow].failed}</div>
+          <div class="text-sm break-words opacity-90">${reason}</div>
+        </div>
+      `;
     }
 
     function autoDetectAndDecode(str) {
@@ -202,17 +219,50 @@
       return found ? found.name : (langNow === 'id' ? 'Tidak diketahui' : 'Unknown');
     }
 
+    function isValidURL(str) {
+      try {
+        const url = new URL(str);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch (_) {
+        return false;
+      }
+    }
+
+    function isDirectLink(url) {
+      const directSites = [
+        'instagram.com',
+        'facebook.com',
+        'youtube.com',
+        'tiktok.com',
+        'twitter.com',
+        'x.com',
+        'linkedin.com',
+        'reddit.com'
+      ];
+      return directSites.some(site => url.includes(site));
+    }
+
     function decodeLink() {
       const t = LANG[langNow];
       const input = inputLink.value.trim();
       output.innerHTML = '';
-      if (!input) return showToast(t.empty, 'error');
+      if (!input) return showErrorDetail(t.empty);
+
+      if (!isValidURL(input)) {
+        return showErrorDetail(t.invalidInput);
+      }
+
+      if (isDirectLink(input)) {
+        return showErrorDetail(t.noNeed + ' (' + input + ')');
+      }
 
       try {
         const encoded = extractParameter(input);
         const decoded = autoDetectAndDecode(encoded);
         const isValid = decoded.startsWith('http://') || decoded.startsWith('https://');
-        if (!isValid) throw new Error('Invalid URL');
+
+        if (!isValid) return showErrorDetail(t.notUrl);
+        if (decoded === input) return showErrorDetail(t.noNeed);
 
         const source = detectSource(decoded);
 
@@ -235,7 +285,7 @@
         showToast(t.success);
       } catch (err) {
         console.error('[Decode Error]', err);
-        showToast(t.error, 'error');
+        showErrorDetail(t.error);
       }
     }
 
@@ -276,7 +326,6 @@
       }
     });
 
-    // PWA install button
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
     window.addEventListener('beforeinstallprompt', e => {
@@ -299,9 +348,7 @@
     }
 
     updateLangUI();
-
-    
-  </script>
+</script>
 
 </body>
 </html>
