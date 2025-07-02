@@ -27,8 +27,8 @@ jobs:
     - name: Resize icons
       run: |
         mkdir -p icons
-        sharp icons/icon-original.png -resize 192x192 -o icons/icon-192.png
-        sharp icons/icon-original.png -resize 512x512 -o icons/icon-512.png
+        sharp icons/icon-original.png --resize 192 192 --output icons/icon-192.png
+        sharp icons/icon-original.png --resize 512 512 --output icons/icon-512.png
 
     # Replace VERSION_PLACEHOLDER
     - name: Replace VERSION_PLACEHOLDER in files
