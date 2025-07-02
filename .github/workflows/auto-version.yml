@@ -15,10 +15,7 @@ jobs:
     - name: Set version based on datetime
       run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    - name: Install ImageMagick
-      run: sudo apt-get update && sudo apt-get install -y imagemagick
-
-    - name: Resize icons using ImageMagick
+    - name: Resize icons (ImageMagick)
       run: |
         mkdir -p icons
         convert icons/icon-original.png -resize 192x192 icons/icon-192.png
@@ -26,7 +23,7 @@ jobs:
 
     - name: Replace VERSION_PLACEHOLDER in files
       run: |
-        find . -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
+        find . -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
         -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
 
     - name: Commit and push updated version
