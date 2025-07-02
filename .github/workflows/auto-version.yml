@@ -9,34 +9,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set version based on datetime
-      run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
+      - name: Set version based on datetime
+        run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    - name: Install ImageMagick
-      run: sudo apt-get update && sudo apt-get install -y imagemagick
+      - name: Install ImageMagick
+        run: sudo apt-get update && sudo apt-get install -y imagemagick
 
-    - name: Resize icons using ImageMagick
-      run: |
-        mkdir -p icons
-        convert icons/icon-original.png -resize 192x192 icons/icon-192.png
-        convert icons/icon-original.png -resize 512x512 icons/icon-512.png
+      - name: Resize icons using ImageMagick
+        run: |
+          mkdir -p icons
+          convert icons/icon-original.png -resize 192x192 icons/icon-192.png
+          convert icons/icon-original.png -resize 512x512 icons/icon-512.png
 
-    - name: Replace VERSION_PLACEHOLDER in files
-      run: |
-        find . -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
-        -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
+      - name: Replace VERSION_PLACEHOLDER in all relevant files
+        run: |
+          find . -type f -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
+            -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
 
-    - name: Commit and push updated version
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@users.noreply.github.com"
-        if git diff --quiet && git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          git add .
-          git commit -m "Force SW update $VERSION" --no-verify || echo "No commit"
-          git push
-        fi
+      - name: Commit and push updated version
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git add .
+            git commit -m "Force SW update $VERSION" --no-verify || echo "No commit"
+            git push
+          fi
