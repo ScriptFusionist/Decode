@@ -16,6 +16,13 @@ jobs:
       run: |
         echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
+    - name: Resize icons (192x192 and 512x512)
+      uses: jakejarvis/image-actions@v1
+      with:
+        source: 'icons/icon-original.png'
+        destination: 'icons'
+        sizes: '192x192,512x512'
+
     - name: Replace VERSION_PLACEHOLDER in files
       run: |
         find . -type f -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
@@ -28,6 +35,7 @@ jobs:
         if git diff --quiet && git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -am "Auto version bump to $VERSION"
+          git add .
+          git commit -m "Auto version bump to $VERSION"
           git push
         fi
