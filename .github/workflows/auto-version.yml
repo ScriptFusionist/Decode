@@ -16,18 +16,27 @@ jobs:
       run: |
         echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    - name: Resize icons (192x192 and 512x512)
-      uses: jakejarvis/image-actions@v1
-      with:
-        source: 'icons/icon-original.png'
-        destination: 'icons'
-        sizes: '192x192,512x512'
+    # Install sharp-cli for image resizing
+    - name: Install sharp-cli
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y nodejs npm
+        sudo npm install -g sharp-cli
 
+    # Resize icon-original.png menjadi 192x192 dan 512x512
+    - name: Resize icons
+      run: |
+        mkdir -p icons
+        sharp icons/icon-original.png -resize 192x192 -o icons/icon-192.png
+        sharp icons/icon-original.png -resize 512x512 -o icons/icon-512.png
+
+    # Replace VERSION_PLACEHOLDER
     - name: Replace VERSION_PLACEHOLDER in files
       run: |
-        find . -type f -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
+        find . -type f -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
         -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
 
+    # Commit only if changes exist
     - name: Commit and push updated version
       run: |
         git config user.name "github-actions"
