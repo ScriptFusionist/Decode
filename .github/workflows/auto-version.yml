@@ -16,7 +16,7 @@ jobs:
       run: |
         echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    - name: Update version in service worker and manifest
+    - name: Replace VERSION_PLACEHOLDER in files
       run: |
         find . -type f -name "sw.js" -o -name "index.html" -o -name "manifest.json" -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
 
