@@ -15,26 +15,17 @@ jobs:
     - name: Set version based on datetime
       run: echo "VERSION=$(date +'%Y%m%d%H%M%S')" >> $GITHUB_ENV
 
-    # Install sharp-cli for image resizing
-    - name: Install sharp-cli
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y nodejs npm
-        sudo npm install -g sharp-cli
-
-    - name: Resize icons
+    - name: Resize icons (ImageMagick)
       run: |
         mkdir -p icons
-        sharp icons/icon-original.png resize 192 192 --output icons/icon-192.png
-        sharp icons/icon-original.png resize 512 512 --output icons/icon-512.png
+        convert icons/icon-original.png -resize 192x192 icons/icon-192.png
+        convert icons/icon-original.png -resize 512x512 icons/icon-512.png
 
-    # Replace VERSION_PLACEHOLDER in relevant files
     - name: Replace VERSION_PLACEHOLDER in files
       run: |
-        find . -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
+        find . -name "sw.js" -o -name "index.html" -o -name "manifest.json" \
         -exec sed -i "s/VERSION_PLACEHOLDER/$VERSION/g" {} +
 
-    # Commit only if changes exist
     - name: Commit and push updated version
       run: |
         git config user.name "github-actions"
